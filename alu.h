@@ -2,9 +2,9 @@
  =====================================================================
  Name        : alu.h
  Programmers : Joshua Neighbarger | jneigh@uw.edu
-               John Bako | jsbako90@uw.edu
- Date        : 10 March 2017
- Description : Performs various operations within the CPU.
+               Mamadou Barry | msbry92@uw.edu
+ Date        : 10 April 2017
+ Description : 
  =====================================================================
  */
 

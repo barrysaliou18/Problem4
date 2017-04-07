@@ -1,8 +1,8 @@
 /*
  =====================================================================
- Name        : cpu.c
+ Name        : alu.c
  Programmers : Joshua Neighbarger | jneigh@uw.edu
-               Mamadou Barry | <email>@uw.edu
+               Mamadou Barry | msbry92@uw.edu
  Date        : 10 April 2017
  Description : 
  =====================================================================

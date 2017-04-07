@@ -2,7 +2,7 @@
  =====================================================================
  Name        : lc3.c
  Programmers : Joshua Neighbarger | jneigh@uw.edu
-               Mamadou Barry | <email>@uw.edu
+               Mamadou Barry | msbry92@uw.edu
  Date        : 10 April 2017
  Description : 
  =====================================================================
@@ -17,8 +17,8 @@
 /* Amount of RAM is defined as the number of words in Memory (double 
  * the value to get number of Bytes) */
 #define NUM_WORDS_TO_DISPLAY 16
-#define INVALID_SELECTION "\nInvalid input. Please select a number between %d and %d.\n"
 #define MEMORY_STARTING_ADDR 0x3000
+#define INVALID_SELECTION "\nInvalid input. Please select a number between %d and %d.\n"
 
 static void clearScreen();
 static void printDebug(CPU_s *cpu, Register *memory);
@@ -105,7 +105,7 @@ static void clearScreen() {
 static void printDebug(CPU_s *cpu, Register *memory) {
 	unsigned int i = 0;
 	printf("%40s\n", "Memory");
-	for (i = 0; i < TOTAL_RAM - TOTAL_REGISTERS - 7; i++)
+	for (i = 0; i < TOTAL_RAM - TOTAL_REGISTERS - 8; i++)
 		printf("\t\t\t\t  0x%04X: 0x%04X\n", i + MEMORY_STARTING_ADDR, memory[i]);
 	printf("Registers%25s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
 	for (int j = 0; j < TOTAL_REGISTERS; i++, j++)

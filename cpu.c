@@ -2,7 +2,7 @@
  =====================================================================
  Name        : cpu.c
  Programmers : Joshua Neighbarger | jneigh@uw.edu
-               Mamadou Barry | <email>@uw.edu
+               Mamadou Barry | msbry92@uw.edu
  Date        : 10 April 2017
  Description : 
 
@@ -30,7 +30,7 @@ void controller(CPU_s *cpu, Register *memory) {
 	FSU_State state = FETCH;
 	assert(memory != NULL);
 	assert(cpu != NULL);
-	// for (;;) {
+	for (;;) {
 		switch (state) {
 			case FETCH:
 				printf("Here in FETCH.\n");
@@ -42,6 +42,7 @@ void controller(CPU_s *cpu, Register *memory) {
 			case DECODE:
 				printf("Here in DECODE.\n");
 				opcode = OPCODE_MASK(cpu->ir);
+				printf("\tOPCODE = %d\n", opcode);
 				switch (opcode) {
 					case ADD:
 						DR = DR_MASK(cpu->ir);
@@ -128,7 +129,7 @@ void controller(CPU_s *cpu, Register *memory) {
 				printf("Here in EXECUTE.\n");
 				switch (opcode) {
 					case TRAP:
-						trap(immed8);
+						trap(immed8, cpu);
 						break;
 					case BR:
 						break;
@@ -166,11 +167,24 @@ void controller(CPU_s *cpu, Register *memory) {
 				state = FETCH;
 				break;
 		}
-	// }
+	}
 }
 
-void trap(const unsigned int code) {
+void trap(const unsigned int code, CPU_s *cpu) {
 	switch (code) {
+		case GETC:
+			break;
+		case OUT:
+			break;
+		case PUTS:
+			break;
+		case IN:
+			break;
+		case PUTSP:
+			break;
+		case HALT:
+			exit(0);
+			break;
 		default:
 			break;
 	}
