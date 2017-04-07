@@ -84,7 +84,7 @@ void controller(CPU_s *cpu, Register *memory) {
 				printf("Here in EVAL_ADDR.\n");
 				switch (opcode) {
 					case LD: case ST:
-						cpu->mar = cpu->pc + sext9(immed9);
+						cpu->mar = cpu->pc + SEXT9(immed9);
 						break;
 					case JMP:
 						cpu->mar = cpu->reg_file[SR1];
@@ -99,11 +99,11 @@ void controller(CPU_s *cpu, Register *memory) {
 				switch (opcode) {
 					case ADD:
 						cpu->alu->a = cpu->reg_file[SR1];
-						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : sext5(immed5);
+						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : SEXT5(immed5);
 						cpu->alu->op = add;
 					case AND:
 						cpu->alu->a = cpu->reg_file[SR1];
-						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : sext5(immed5);
+						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : SEXT5(immed5);
 						cpu->alu->op = and;
 						break;
 					case NOT:
@@ -170,5 +170,8 @@ void controller(CPU_s *cpu, Register *memory) {
 }
 
 void trap(const unsigned int code) {
-	
+	switch (code) {
+		default:
+			break;
+	}
 }

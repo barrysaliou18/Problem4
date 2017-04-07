@@ -52,10 +52,11 @@
 #define IMMED7_MASK(x) 		(x & 0x007F)
 #define IMMED8_MASK(x) 		(x & 0x00FF)
 #define IMMED9_MASK(x) 		(x & 0x01FF)
-#define SEXT6(x)
-#define SEXT8(x)
-#define SEXT9(x)
-#define SEXT11(x)
+#define SEXT5(x)			(BIT_MASK_N(x, 5) ? x | 0xFFE0 : x & BIT_MASK_5)
+#define SEXT6(x)			(BIT_MASK_N(x, 6) ? x | 0xF800 : x & BIT_MASK_6)
+#define SEXT8(x)			(BIT_MASK_N(x, 8) ? x | 0xFF00 : x & BIT_MASK_8)
+#define SEXT9(x)			(BIT_MASK_N(x, 9) ? x | 0xFE00 : x & BIT_MASK_9)
+#define SEXT11(x)			(BIT_MASK_N(x, 11) ? x | 0xFFE0 : x & BIT_MASK_11)
 
 /* ======================= Type Definitions ======================= */
 

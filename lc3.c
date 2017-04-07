@@ -18,6 +18,7 @@
  * the value to get number of Bytes) */
 #define NUM_WORDS_TO_DISPLAY 16
 #define INVALID_SELECTION "\nInvalid input. Please select a number between %d and %d.\n"
+#define MEMORY_STARTING_ADDR 0x3000
 
 static void clearScreen();
 static void printDebug(CPU_s *cpu, Register *memory);
@@ -36,6 +37,7 @@ int main(const int argc, const char *argv[]) {
 	assert(cpu->alu != NULL);
 	assert(memory != NULL);
 
+	clearMem(memory);
 	setvbuf(stdout, NULL, _IONBF, 0);
 	if (argc == 2 && argv[1][0] == '0' && argv[1][1] == 'x') {
 		Register ir;
@@ -104,20 +106,20 @@ static void printDebug(CPU_s *cpu, Register *memory) {
 	unsigned int i = 0;
 	printf("%40s\n", "Memory");
 	for (i = 0; i < TOTAL_RAM - TOTAL_REGISTERS - 7; i++)
-		printf("\t\t\t\t  0x%04X: 0x%04X\n", i, memory[i]);
-	printf("Registers%25s0x%04X: 0x%04X\n", "", i, memory[i]); i++;
+		printf("\t\t\t\t  0x%04X: 0x%04X\n", i + MEMORY_STARTING_ADDR, memory[i]);
+	printf("Registers%25s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
 	for (int j = 0; j < TOTAL_REGISTERS; i++, j++)
-		printf("R%d: 0x%04X                        0x%04X: 0x%04X\n", j, cpu->reg_file[j], i, memory[i]);
-	printf("%34s0x%04X: 0x%04X\n", "", i, memory[i]); i++;
-	printf("%34s0x%04X: 0x%04X\n", "", i, memory[i]); i++;
-	printf("Special Registers%17s0x%04X: 0x%04X\n", "", i, memory[i]); i++;
-	printf("PC:  0x%04X    IR:  0x%04X        0x%04X: 0x%04X\n", cpu->pc, cpu->ir, i, memory[i]); i++; 			// Next instruction address, current instruction
-	printf("MAR: 0x%04X    MDR: 0x%04X        0x%04X: 0x%04X\n", cpu->mar, cpu->mdr, i, memory[i]); i++;		// Address of memory, Value of memory
-	printf("Status Flags%22s0x%04X: 0x%04X\n", "", i, memory[i]); i++;
+		printf("R%d: 0x%04X                        0x%04X: 0x%04X\n", j, cpu->reg_file[j], i + MEMORY_STARTING_ADDR, memory[i]);
+	printf("%34s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
+	printf("%34s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
+	printf("Special Registers%17s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
+	printf("PC:  0x%04X    IR:  0x%04X        0x%04X: 0x%04X\n", cpu->pc, cpu->ir, i + MEMORY_STARTING_ADDR, memory[i]); i++; 			// Next instruction address, current instruction
+	printf("MAR: 0x%04X    MDR: 0x%04X        0x%04X: 0x%04X\n", cpu->mar, cpu->mdr, i + MEMORY_STARTING_ADDR, memory[i]); i++;		// Address of memory, Value of memory
+	printf("Status Flags%22s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
 	printf("N: %d, Z: %d, P: %d, C: %d, O: %d      0x%04X: 0x%04X\n\n",
 		ALU_N_MASK(cpu->alu->flags), ALU_Z_MASK(cpu->alu->flags), 
 		ALU_P_MASK(cpu->alu->flags), ALU_C_MASK(cpu->alu->flags), 
-		ALU_O_MASK(cpu->alu->flags), i, memory[i]);
+		ALU_O_MASK(cpu->alu->flags), i + MEMORY_STARTING_ADDR, memory[i]);
 }
 
 /*
