@@ -1,0 +1,77 @@
+*
+ =====================================================================
+ Name        : results.txt
+ Programmers : Joshua Neighbarger | jneigh@uw.edu
+               Mamadou Barry | msbry92@uw.edu
+ Date        : 10 April 2017
+ Description : 
+ This show the results from the console
+ =====================================================================
+ */
+
+                                  Memory
+				 			 	  0x3000: 0x1642
+								  0x3001: 0x0000
+								  0x3002: 0x0000
+								  0x3003: 0x0000
+								  0x3004: 0x0000
+								  0x3005: 0x0000
+								  0x3006: 0x0000
+								  0x3007: 0x0000
+Registers                         0x3008: 0x0000
+R0: 0x6544                        0x3009: 0x0000
+R1: 0x1234                        0x300A: 0x0000
+R2: 0x3327                        0x300B: 0x0000
+R3: 0x4D74                        0x300C: 0x0000
+R4: 0x6C61                        0x300D: 0x0000
+R5: 0x6F6C                        0x300E: 0x0000
+R6: 0x5A63                        0x300F: 0x0000
+R7: 0x6E6F                        0x3010: 0x0000
+                                  0x3011: 0x0000
+                                  0x3012: 0x0000
+Special Registers                 0x3013: 0x0000
+PC:  0x0000    IR:  0x0065        0x3014: 0x0000
+MAR: 0x0000    MDR: 0x0000        0x3015: 0x0000
+Status Flags                      0x3016: 0x0000
+N: 0, Z: 0, P: 0, C: 0, O: 0      0x3017: 0x0000
+
+Here in FETCH.
+	Contents of IR = 1642
+Here in DECODE.
+	OPCODE = 1 (ADD)
+	DR: 3
+	SR1: 1
+	SR2: 2
+	IMMD5: 2
+Here in EVAL_ADDR.
+Here in FETCH_OP.
+	alu->a: 4660
+	alu->b: 13095
+Here in EXECUTE.
+Here in STORE.
+                                  Memory
+								  0x3000: 0x1642
+								  0x3001: 0x0000
+								  0x3002: 0x0000
+								  0x3003: 0x0000
+								  0x3004: 0x0000
+								  0x3005: 0x0000
+								  0x3006: 0x0000
+								  0x3007: 0x0000
+Registers                         0x3008: 0x0000
+R0: 0x6544                        0x3009: 0x0000
+R1: 0x1234                        0x300A: 0x0000
+R2: 0x3327                        0x300B: 0x0000
+R3: 0x455B                        0x300C: 0x0000
+R4: 0x6C61                        0x300D: 0x0000
+R5: 0x6F6C                        0x300E: 0x0000
+R6: 0x5A63                        0x300F: 0x0000
+R7: 0x6E6F                        0x3010: 0x0000
+                                  0x3011: 0x0000
+                                  0x3012: 0x0000
+Special Registers                 0x3013: 0x0000
+PC:  0x0001    IR:  0x1642        0x3014: 0x0000
+MAR: 0x0000    MDR: 0x0000        0x3015: 0x0000
+Status Flags                      0x3016: 0x0000
+N: 0, Z: 0, P: 0, C: 0, O: 0      0x3017: 0x0000
+
