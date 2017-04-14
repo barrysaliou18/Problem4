@@ -14,6 +14,5 @@
 typedef unsigned short Bit;
 typedef unsigned short Byte;
 typedef unsigned short Register;
-typedef enum bool {false = 0, true} _bool;
 
 #endif /* DEFINITIONS_H */

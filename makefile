@@ -1,5 +1,5 @@
 target = lc3
-libraries = -lm
+libraries = -lm -lncurses
 compiler = gcc
 flags = -g -std=c99 -Wall
 

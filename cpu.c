@@ -23,9 +23,7 @@
 
 #include "cpu.h"
 
-Register memory[TOTAL_RAM];
-
-void controller(CPU_s *cpu, Register *memory) {
+void controller(CPU_s *cpu, Register *memory, bool step) {
 	unsigned int opcode, DR, SR1, SR2, immed5, immed8, immed9;
 	FSU_State state = FETCH;
 	assert(memory != NULL);
@@ -33,6 +31,9 @@ void controller(CPU_s *cpu, Register *memory) {
 	for (;;) {
 		switch (state) {
 			case FETCH:
+				if (step) {
+					if (cpu->pc != 0) return;
+				}
 				printf("Here in FETCH.\n");
 				cpu->ir = memory[cpu->pc];
 				cpu->pc++;

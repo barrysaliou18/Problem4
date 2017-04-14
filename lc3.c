@@ -8,6 +8,7 @@
  =====================================================================
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +45,7 @@ int main(const int argc, const char *argv[]) {
 		sscanf(argv[1], "%X", &ir);
 		memory[0] = ir;
 		printDebug(cpu, memory);
-		controller(cpu, memory);
+		controller(cpu, memory, true);
 		printDebug(cpu, memory);
 	} else if (argc == 2 && !strcmp(argv[1], "-gui")) {
 		do {
@@ -76,6 +77,7 @@ int main(const int argc, const char *argv[]) {
 			}
 		} while (selection != 5);
 	} else {
+		fprintf(stderr, "argc: %d, argv[1][0]: %c, argv[1][1]: %c\n", argc, argv[1][0], argv[1][1]);
 		fprintf(stderr, "Usage: lc3 {-gui|0x????} \n");
 		fprintf(stderr, "-gui Launches the program in GUI mode (experimental) \n");
 		fprintf(stderr, "0x???? Runs the defined 16-bit IR in HEX \n");
@@ -149,7 +151,7 @@ static void run(CPU_s *cpu, Register *memory) {
 	int selection = 0;
 	printf("1) Run, 2) Step\n::_");
 	scanf("%d", &selection);
-	if (selection == 1 || selection == 2) controller(cpu, memory);
+	if (selection == 1 || selection == 2) controller(cpu, memory, false);
 	else {
 		printf(INVALID_SELECTION, 1, 2);
 		sleep(2);

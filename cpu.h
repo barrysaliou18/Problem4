@@ -12,6 +12,7 @@
 #define CPU_H
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "alu.h"
@@ -88,7 +89,7 @@ typedef struct cpu_s {
 
 /* ========================== Prototypes ========================== */
 
-void controller(CPU_s *cpu, Register *memory);
+void controller(CPU_s *cpu, Register *memory, bool step);
 void trap(const unsigned int code, CPU_s *cpu);
 
 #endif /* CPU_H */
