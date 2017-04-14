@@ -43,41 +43,57 @@ void controller(CPU_s *cpu, Register *memory, bool step) {
 			case DECODE:
 				printf("Here in DECODE.\n");
 				opcode = OPCODE_MASK(cpu->ir);
-				printf("\tOPCODE = %d\n", opcode);
+				printf("\tOPCODE = %d", opcode);
 				switch (opcode) {
 					case ADD:
+						printf(" (ADD)\n");
 						DR = DR_MASK(cpu->ir);
 						SR1 = SR1_MASK(cpu->ir);
 						SR2 = SR2_MASK(cpu->ir);
 						immed5 = IMMED5_MASK(cpu->ir);
+						printf("\tDR: %d\n\tSR1: %d\n\tSR2: %d\n\tIMMD5: %d\n", DR, SR1, SR2, immed5);
 						break;
 					case AND:
+						printf(" (AND)\n");
 						DR = DR_MASK(cpu->ir);
 						SR1 = SR1_MASK(cpu->ir);
 						SR2 = SR2_MASK(cpu->ir);
 						immed5 = IMMED5_MASK(cpu->ir);
+						printf("\tDR: %d\n\tSR1: %d\n\tSR2: %d\n\tIMMD5: %d\n", DR, SR1, SR2, immed5);
 						break;
 					case NOT:
+						printf(" (NOT)\n");
 						DR = DR_MASK(cpu->ir);
 						SR1 = SR1_MASK(cpu->ir);
+						printf("\tDR: %d\n\tSR1: %d\n", DR, SR1);
 						break;
 					case TRAP:
+						printf(" (TRAP)\n");
 						immed8 = IMMED8_MASK(cpu->ir);
+						printf("\tIMMD8: %d\n", immed8);
 						break;
 					case LD:
+						printf(" (LD)\n");
 						DR = DR_MASK(cpu->ir);
 						immed9 = IMMED9_MASK(cpu->ir);
+						printf("\tDR: %d\n\tIMMD9: %d\n", DR, immed9);
 						break;
 					case ST:
+						printf(" (ST)\n");
 						SR1 = DR_MASK(cpu->ir);
 						immed9 = IMMED9_MASK(cpu->ir);
+						printf("\tSR1: %d\n\tIMMD9: %d\n", SR1, immed9);
 						break;
 					case JMP:
+						printf(" (JMP)\n");
 						SR1 = SR1_MASK(cpu->ir);
+						printf("\tSR1: %d\n", SR1);
 						break;
 					case BR:
+						printf(" (BR)\n");
 						DR = DR_MASK(cpu->ir); // nzp
 						immed9 = IMMED9_MASK(cpu->ir);
+						printf("\tDR: %d\n\tIMMD9: %d\n", DR, immed9);
 						break;
 				}
 				state = EVAL_ADDR;
@@ -87,9 +103,11 @@ void controller(CPU_s *cpu, Register *memory, bool step) {
 				switch (opcode) {
 					case LD: case ST:
 						cpu->mar = cpu->pc + SEXT9(immed9);
+						printf("\tMAR: 0x%X\n", cpu->mar);
 						break;
 					case JMP:
 						cpu->mar = cpu->reg_file[SR1];
+						printf("\tMAR: 0x%X\n", cpu->mar);
 						break;
 					default:
 						break;
@@ -101,17 +119,21 @@ void controller(CPU_s *cpu, Register *memory, bool step) {
 				switch (opcode) {
 					case ADD:
 						cpu->alu->a = cpu->reg_file[SR1];
-						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : SEXT5(immed5);
+						cpu->alu->b = BIT_MASK_N(cpu->ir, 7) ? cpu->reg_file[SR2] : SEXT5(immed5);
 						cpu->alu->op = add;
+						printf("\talu->a: %d\n\talu->b: %d\n", cpu->alu->a, cpu->alu->b);						
+						break;
 					case AND:
 						cpu->alu->a = cpu->reg_file[SR1];
-						cpu->alu->b = BIT_MASK_N(cpu->ir, 5) ? cpu->reg_file[SR2] : SEXT5(immed5);
+						cpu->alu->b = BIT_MASK_N(cpu->ir, 7) ? cpu->reg_file[SR2] : SEXT5(immed5);
 						cpu->alu->op = and;
+						printf("\talu->a: %d\n\talu->b: %d\n", cpu->alu->a, cpu->alu->b);
 						break;
 					case NOT:
 						cpu->alu->a = cpu->reg_file[SR1];
 						cpu->alu->b = cpu->reg_file[SR2];
 						cpu->alu->op = not;
+						printf("\talu->a: %d\n\talu->b: %d\n", cpu->alu->a, cpu->alu->b);
 						break;
 					case LD:
 						cpu->mdr = memory[cpu->mar];
@@ -143,12 +165,6 @@ void controller(CPU_s *cpu, Register *memory, bool step) {
 			case STORE:
 				printf("Here in STORE.\n");
 				switch (opcode) {
-					case ADD:
-						break;
-					case AND:
-						break;
-					case NOT:
-						break;
 					case TRAP:
 						break;
 					case LD:

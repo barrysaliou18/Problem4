@@ -57,7 +57,7 @@
 
 #define DR_MASK(x) 			((x & 0x0E00) >> 9)
 #define OPCODE_MASK(x) 		((x & 0xF000) >> 12)
-#define SR1_MASK(x) 		(x & 0x01C0)
+#define SR1_MASK(x) 		((x & 0x01C0) >> 6)
 #define SR2_MASK(x) 		(x & 0x0003)
 #define IMMED5_MASK(x) 		(x & 0x001F)
 #define IMMED7_MASK(x) 		(x & 0x007F)

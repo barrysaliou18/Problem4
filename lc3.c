@@ -44,6 +44,8 @@ int main(const int argc, const char *argv[]) {
 		Register ir;
 		sscanf(argv[1], "%X", &ir);
 		memory[0] = ir;
+		cpu->reg_file[1] = 0x1234;
+		cpu->reg_file[2] = 0x3327;
 		printDebug(cpu, memory);
 		controller(cpu, memory, true);
 		printDebug(cpu, memory);
