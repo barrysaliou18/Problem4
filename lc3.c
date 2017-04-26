@@ -1,190 +1,457 @@
 /*
- =====================================================================
- Name        : lc3.c
- Programmers : Joshua Neighbarger | jneigh@uw.edu
-               Mamadou Barry | msbry92@uw.edu
- Date        : 10 April 2017
- Description : 
- =====================================================================
- */
+	lc3.c
+	
+	Programmer: George Mobus
+	Date: 4/18/17
+	Version: 1.0
 
-#include <stdbool.h>
+	Edited: Carter Odem, Mamadou Barry
+	Date: 4/20/2017
+	
+	Simulates the simulation of the LC-3 computer in Patt & Patel
+*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "cpu.h"
+#include <ncurses.h>
+#include "lc3.h"
 
-/* Amount of RAM is defined as the number of words in Memory (double 
- * the value to get number of Bytes) */
-#define NUM_WORDS_TO_DISPLAY 16
-#define MEMORY_STARTING_ADDR 0x3000
-#define INVALID_SELECTION "\nInvalid input. Please select a number between %d and %d.\n"
-
-static void clearScreen();
-static void printDebug(CPU_s *cpu, Register *memory);
-static void load(Register *memory);
-static void run(CPU_s *cpu, Register *memory);
-static void clearMem(Register *memory);
-static void showMem();
-
-int main(const int argc, const char *argv[]) {
-	int status = 0, selection = 0;
-	CPU_s *cpu = calloc(sizeof(CPU_s), 1);
-	cpu->alu = calloc(sizeof(ALU_s), 1);
-	Register memory[TOTAL_RAM];
-
-	assert(cpu != NULL);
-	assert(cpu->alu != NULL);
-	assert(memory != NULL);
-
-	clearMem(memory);
-	setvbuf(stdout, NULL, _IONBF, 0);
-	if (argc == 2 && argv[1][0] == '0' && argv[1][1] == 'x') {
-		Register ir;
-		sscanf(argv[1], "%X", &ir);
-		memory[0] = ir;
-		cpu->reg_file[1] = 0x1234;
-		cpu->reg_file[2] = 0x3327;
-		printDebug(cpu, memory);
-		controller(cpu, memory, true);
-		printDebug(cpu, memory);
-	} else if (argc == 2 && !strcmp(argv[1], "-gui")) {
-		do {
-			selection = 0;
-			clearScreen();
-			printDebug(cpu, memory);
-			printf("1) Load, 2) Run, 3) Clear Mem, 4) Show Mem, ");
-			printf("5) Exit\n::_");
-			scanf("%d", &selection);
-			switch(selection) {
-				case 1:
-					load(memory);
-					break;
-				case 2:
-					run(cpu, memory);
-					break;
-				case 3:
-					clearMem(memory);
-					break;
-				case 4:
-					showMem(memory);
-					break;
-				case 5:
-					break;
-				default:
-					printf(INVALID_SELECTION, 1, 5);
-					sleep(2);
-					break;
-			}
-		} while (selection != 5);
-	} else {
-		fprintf(stderr, "argc: %d, argv[1][0]: %c, argv[1][1]: %c\n", argc, argv[1][0], argv[1][1]);
-		fprintf(stderr, "Usage: lc3 {-gui|0x????} \n");
-		fprintf(stderr, "-gui Launches the program in GUI mode (experimental) \n");
-		fprintf(stderr, "0x???? Runs the defined 16-bit IR in HEX \n");
+Register sext(Register immed, int extend)
+{
+    if (immed & extend)
+    {
+	switch (extend)
+	{
+	case EXT5:
+	    immed |= NEG5;
+	    break;
+	case EXT6:
+	    immed |= NEG6;
+	    break;
+	case EXT9:
+	    immed |= NEG9;
+	    break;
+	case EXT11:
+	    immed |= NEG11;
+	    break;
 	}
-
-	if (cpu->alu != NULL) free(cpu->alu);
-	if (cpu != NULL) free(cpu);
-	return status;
+    }
+    return immed;
 }
 
-/*
- * clearScreen
- * -----------
- * Clears the console.
- */
-
-static void clearScreen() {
-	for (int i = 0; i < 50; i++) printf("\n");
+int printStatus(CPU_p cpu, Register mem[])
+{
+    //printf("Contents of PC = %04X\n", cpu->pc);
+    //printf("Contents of MAR = %04X\n", cpu->mar);
+    //printf("Contents of MDR = %04X\n", cpu->mdr);
+    //printf("Contents of IR = %04X\n", cpu->ir);
+    //printf("Contents of PSR = %04X\n", cpu->psr);
+    //printf("Contents of Main Bus = %04X\n", cpu->main_bus);
+    int i;
+    // for (i=0; i<5; i++) //printf("Contents of register[%02X]: %04X\n", i, cpu->reg_file[i]);
+    // for (i=0; i<10; i++) //printf("Contents of memory[%04X]: %04X\n", i, mem[i]);
 }
 
-/*
- * printDebug
- * ----------
- * Prints the debug output of the computer's state.
- */
-
-static void printDebug(CPU_s *cpu, Register *memory) {
-	unsigned int i = 0;
-	printf("%40s\n", "Memory");
-	for (i = 0; i < TOTAL_RAM - TOTAL_REGISTERS - 8; i++)
-		printf("\t\t\t\t  0x%04X: 0x%04X\n", i + MEMORY_STARTING_ADDR, memory[i]);
-	printf("Registers%25s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
-	for (int j = 0; j < TOTAL_REGISTERS; i++, j++)
-		printf("R%d: 0x%04X                        0x%04X: 0x%04X\n", j, cpu->reg_file[j], i + MEMORY_STARTING_ADDR, memory[i]);
-	printf("%34s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
-	printf("%34s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
-	printf("Special Registers%17s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
-	printf("PC:  0x%04X    IR:  0x%04X        0x%04X: 0x%04X\n", cpu->pc, cpu->ir, i + MEMORY_STARTING_ADDR, memory[i]); i++; 			// Next instruction address, current instruction
-	printf("MAR: 0x%04X    MDR: 0x%04X        0x%04X: 0x%04X\n", cpu->mar, cpu->mdr, i + MEMORY_STARTING_ADDR, memory[i]); i++;		// Address of memory, Value of memory
-	printf("Status Flags%22s0x%04X: 0x%04X\n", "", i + MEMORY_STARTING_ADDR, memory[i]); i++;
-	printf("N: %d, Z: %d, P: %d, C: %d, O: %d      0x%04X: 0x%04X\n\n",
-		ALU_N_MASK(cpu->alu->flags), ALU_Z_MASK(cpu->alu->flags), 
-		ALU_P_MASK(cpu->alu->flags), ALU_C_MASK(cpu->alu->flags), 
-		ALU_O_MASK(cpu->alu->flags), i + MEMORY_STARTING_ADDR, memory[i]);
+int setCC(CPU_p cpu)
+{
+    int sign_bit;
+    cpu->psr &= CC_CLEAR_MASK; // clear CC flags in PSR
+    if (cpu->main_bus == 0)
+	cpu->psr |= ZERO_FLAG_MASK;
+    sign_bit = (int)(cpu->main_bus & SIGN_BIT_MASK);
+    if (sign_bit)
+	cpu->psr |= NEG_FLAG_MASK;
+    else
+	cpu->psr |= POS_FLAG_MASK;
 }
 
-/*
- * load
- * ----
- * Prompts the user for a filename and tries to load the hex program into memory.
- */
+int controller(CPU_p cpu, Register mem[])
+{
+    // check to make sure both pointers are not NULL
+    // do any initializations here
+    unsigned int opcode;
+    unsigned int dr;
+    unsigned int sr1;
+    unsigned int sr2;
+    unsigned int bit5;
+    unsigned int immed_offset; // fields for the IR
+    unsigned int effective_addr;
+    int ben;
+    int sign_bit;
+    int flag = 0;
 
-static void load(Register *memory) {
-	char *path = calloc(sizeof(char), 256);
-	printf("Which file would you like to load?\n::_");
-	scanf("%s", path);
-	FILE *src = fopen(path, "r");
-	for (int i = 0, var = 0; i < TOTAL_RAM 
-		&& fscanf(src, "%04X", &var) != EOF; i++)
-		memory[i] = var & BIT_MASK_16;
-	fclose(src);
-}
+    // fill the registers with random numbers to start off in final simulation code.
 
-/*
- * run
- * ---
- * Runs the program that is currently in memory.
- */
+    int state = FETCH;
 
-static void run(CPU_s *cpu, Register *memory) {
-	int selection = 0;
-	printf("1) Run, 2) Step\n::_");
-	scanf("%d", &selection);
-	if (selection == 1 || selection == 2) controller(cpu, memory, false);
-	else {
-		printf(INVALID_SELECTION, 1, 2);
-		sleep(2);
-		return;
+    while (flag == 0)
+    { // efficient endless loop
+	switch (state)
+	{
+
+	case FETCH: // microstates 18, 33, 35 in the book
+		    //printf("Here in FETCH\n");
+		    // microstates
+	    flag = textgui(cpu, mem);
+
+	    cpu->mar = cpu->pc;
+	    cpu->pc++;
+	    cpu->mdr = mem[(cpu->mar - 0x3000) + 1]; // ignore time delays
+	    cpu->main_bus = cpu->mdr;
+	    cpu->ir = cpu->main_bus;
+
+	    // get memory[PC] into IR - memory is a global array
+	    // increment PC
+	    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	    // put //printf statements in each state and microstate to see that it is working
+	    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	    //	printStatus(cpu, mem);
+	    state = DECODE;
+	    break;
+	case DECODE: //
+	    //printf("Here in DECODE\n");
+	    opcode = (cpu->ir & OPCODE_MASK) >> OPCODE_SHIFT;
+	    // OK to extract registers
+	    dr = (cpu->ir & DR_MASK) >> DR_SHIFT;
+	    sr1 = (cpu->ir & SR1_MASK) >> SR1_SHIFT;
+	    sr2 = cpu->ir & SR2_MASK;
+	    bit5 = (cpu->ir & BIT5_MASK ? 1 : 0);
+
+	    ben = (((cpu->ir & NEG_BIT_MASK) >> 11) & ((cpu->psr & NEG_FLAG_MASK) >> 2)) |
+		  (((cpu->ir & ZERO_BIT_MASK) >> 11) & ((cpu->psr & ZERO_FLAG_MASK) >> 1)) |
+		  (((cpu->ir & POS_BIT_MASK) >> 11) & (cpu->psr & POS_FLAG_MASK));
+
+	    state = EVAL_ADDR;
+	    //printf("opcode = %02X, dr = %02X, sr1 = %02X, sr2 = %02X\n", opcode, dr, sr1, sr2);
+	    printStatus(cpu, mem);
+	    break;
+	case EVAL_ADDR: //
+			//printf("Here in EVAL_ADDR\n");
+	    switch (opcode)
+	    { // microstates
+	      // compute effective address, e.g. add sext(immed7) to register
+	    case ADD:
+	    case AND:
+		if (bit5)
+		{
+		    immed_offset = sext(cpu->ir & IMM5_MASK, EXT5);
+		}
+		break;
+	    case NOT: // nothing needed
+		break;
+	    case TRAP:
+		immed_offset = cpu->ir & TRAP_VECT8_MASK; // same as ZEXT
+		break;
+	    case LD: // these 3 need offset 9 address
+	    case ST:
+	    case BR:
+		immed_offset = sext(cpu->ir & OFFSET9_MASK, EXT9);
+		effective_addr = immed_offset + cpu->pc;
+		cpu->mar = effective_addr;
+		break;
+	    case JMP: // nothing needed
+		break;
+	    }
+	    printStatus(cpu, mem);
+	    state = FETCH_OP;
+	    break;
+	case FETCH_OP: // Look at ST. Microstate 23 example of getting a value out of a register
+	    //printf("Here in FETCH_OP\n");
+	    switch (opcode)
+	    {
+	    // get operands out of registers into A, B of ALU
+	    // or get memory for load instr.
+	    case ADD:
+	    case AND:
+		cpu->alu->A = cpu->reg_file[sr1];
+		if (!bit5)
+		{
+		    cpu->alu->B = cpu->reg_file[sr2];
+		}
+		else
+		    cpu->alu->B = immed_offset; // second operand
+		break;
+	    case NOT:
+		cpu->alu->A = cpu->reg_file[sr1];
+		break;
+	    case TRAP:
+		break;
+	    case LD:
+		cpu->mdr = mem[cpu->mar - 0x3000];
+		break;
+	    case ST:
+		cpu->mdr = cpu->reg_file[dr]; // in this case dr is actually the source reg
+		break;
+	    case JMP:
+		// nothing
+		break;
+	    case BR:
+		// nothing
+		break;
+	    }
+	    printStatus(cpu, mem);
+	    state = EXECUTE;
+	    break;
+	case EXECUTE: // Note that ST does not have an execute microstate
+		      //printf("Here in EXECUTE\n");
+	    switch (opcode)
+	    {
+	    // do what the opcode is for, e.g. ADD
+	    // in case of TRAP: call trap(int trap_vector) routine, see below for TRAP x25 (HALT)
+	    case ADD:
+		cpu->alu->R = cpu->alu->A + cpu->alu->B;
+		break;
+	    case AND:
+		cpu->alu->R = cpu->alu->A & cpu->alu->B;
+		break;
+	    case NOT:
+		cpu->alu->R = ~cpu->alu->A;
+		break;
+	    case TRAP:
+		break;
+	    case LD:
+		break;
+	    case ST:
+		break;
+	    case JMP:
+		cpu->pc = cpu->reg_file[sr1]; // sr1 == base reg.
+		break;
+	    case BR:
+		if (ben)
+		    cpu->pc = effective_addr;
+		break;
+	    }
+	    printStatus(cpu, mem);
+	    state = STORE;
+	    break;
+	case STORE: // Look at ST. Microstate 16 is the store to memory
+		    //printf("Here in STORE\n");
+	    switch (opcode)
+	    {
+	    // write back to register or store MDR into memory
+	    case ADD:
+	    case AND:
+	    case NOT:
+		cpu->main_bus = cpu->alu->R;
+		cpu->reg_file[dr] = cpu->main_bus;
+		setCC(cpu);
+		break;
+	    case TRAP:
+		break;
+	    case LD:
+		cpu->main_bus = cpu->mdr;
+		cpu->reg_file[dr] = cpu->main_bus;
+		setCC(cpu);
+		break;
+	    case ST:
+		mem[cpu->mar - 0x3000] = cpu->mdr;
+		break;
+	    case JMP:
+		// nothing
+		break;
+	    case BR:
+		// nothing
+		break;
+	    }
+
+	    state = FETCH;
+
+	    break;
 	}
+    }
 }
 
-/*
- * clearMem
- * --------
- * Clears memory.
- */
+int textgui(CPU_p cpu, Register mem[])
+{
+    FILE *file;
+    char mesg[] = ">";
+    char str[80];
+    char filename[80];
+    int i = 1;
+    int count;
+    char *temp;
+    int flag = 0;
+    unsigned short currentMemLocation = 0;
+    unsigned short aMemLocation = currentMemLocation;
 
-static void clearMem(Register *memory) {
-	for (int i = 0; i < TOTAL_RAM; i++)
-		memory[i] = 0 & BIT_MASK_16;
+    initscr(); /* start the curses mode */
+
+     mvprintw(1, 10, "Welcome To the Lc3 Simulator^2");
+    mvprintw(3, 5, "Registers");
+    mvprintw(3, 30, "Memory");
+    //instructions
+    mvprintw(20, 3, "[1.Load]");
+    mvprintw(20, 12, "[3.Step]");
+    mvprintw(20, 21, "[5.Display Memory] [9.exit]");
+	
+
+    while (flag == 0)
+    {
+
+	aMemLocation = currentMemLocation;
+	move(22, 4);
+	clrtoeol();
+	mvprintw(22, 4, "%s", mesg);
+
+	//memory
+	count = 0;
+	i = aMemLocation;
+
+
+	while (count < 16)
+	{
+	    move(4 + count, 27);
+	    clrtoeol();
+	    mvprintw(4 + count, 28, "x%04X:", (mem[0] + aMemLocation));
+	    mvprintw(4 + count, 35, "x%04X", mem[i + 1]);
+	    aMemLocation++;
+	    count++;
+	    i++;
+	}
+	if (cpu->pc - mem[0] + 4 < 20)
+	{
+	    mvprintw((cpu->pc - mem[0]) + 4, 27, ">");
+	}
+	//Registers
+	i = 0;
+	while (i < 8)
+	{
+	    mvprintw(5 + i, 5, "R%d:", i);
+	    mvprintw(5 + i, 12, "x%04X", cpu->reg_file[i]);
+	    i++;
+	}
+	// specialty regesters
+	mvprintw(14, 3, "PC:x%04X", cpu->pc);
+	mvprintw(14, 15, "IR:x%04X", cpu->ir);
+	mvprintw(15, 3, "MDR:x%04X", cpu->mdr);
+	mvprintw(15, 15, "MAR:x%04X", cpu->mar);
+	mvprintw(16, 3, "A:x%04X", cpu->alu->A);
+	mvprintw(16, 15, "B:x%04X", cpu->alu->B);
+	mvprintw(17, 3, "CC:");
+
+	int p = cpu->psr & POS_FLAG_MASK;
+	int z = (cpu->psr & ZERO_FLAG_MASK) >> 1;
+	int n = (cpu->psr & NEG_FLAG_MASK) >> 2;
+
+	mvprintw(17, 7, "N:%d", n);
+	mvprintw(17, 11, "P:%d", p);
+	mvprintw(17, 15, "Z:%d", z);
+
+	mvprintw(22, 4, "%s", mesg);
+	getstr(str);
+
+	if (str[0] == '1')
+	{
+	    move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "Please enter a text file");
+	    move(22, 4);
+	    clrtoeol();
+	    mvprintw(22, 4, "%s", mesg);
+	    getstr(filename);
+
+	    file = fopen(filename, "r");
+	    if (file)
+	    {
+		i = 0;
+		while (fread(str, 1, 6, file) == 6)
+		{
+		    mem[i] = strtol(str, &temp, 16);
+		    i++;
+		}
+		move(23, 4);
+		clrtoeol();
+		mvprintw(23, 4, "File %s loaded successful", filename);
+		cpu->pc = mem[0];
+	    }
+	    else
+	    {
+		move(23, 4);
+		clrtoeol();
+		mvprintw(23, 4, "##Error404: File Not Found");
+	    }
+	}
+	else if (str[0] == '3')
+	{
+	    if (cpu->ir == 0xF025)
+	    {
+		move(23, 4);
+		clrtoeol();
+		cpu->pc = mem[0];
+		mvprintw(23, 4, "HALT HAS BEEN REACHED PC set to x%04X", cpu->pc);
+	    }
+	    else
+	    {
+		move(23, 4);
+		clrtoeol();
+		mvprintw(23, 4, "Steping through");
+	    }
+
+	    return 0;
+	}
+	else if (str[0] == '5')
+	{	
+		int set = 0;
+    	char *temp;
+		move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "Please enter a Memory address");
+		while(set==0)
+		{
+		set = 1;
+	
+
+	    move(22, 4);
+	    clrtoeol();
+	    mvprintw(22, 4, "%s", mesg);
+	    getstr(str);
+
+	    currentMemLocation = strtol(str, &temp, 16) - mem[0];
+	
+		if(currentMemLocation > 100)
+		{
+   		move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "Error pls enter valid address");
+		set = 0;
+		}else
+		{
+	    move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "moving to location %X", currentMemLocation + mem[0]);
+		}
+		
+		}
+
+	}
+	else if (str[0] == '9')
+	{
+		move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "Program exiting: press return to exit");
+	    move(22, 4);
+	    clrtoeol();
+	    mvprintw(22, 4, "%s", mesg);
+	    getstr(str);
+		endwin();
+	    return 1;
+	}
+	else
+	{
+	    move(23, 4);
+	    clrtoeol();
+	    mvprintw(23, 4, "Input error try again");
+	}
+    }
 }
 
-/*
- * showMem
- * -------
- * Shows the next NUM_WORDS_TO_DISPLAY words of memory after the 
- * prompted address if they exist in memory.
- */
+int main(int argc, char *argv[])
+{
+ m
+    Register memory[100];
 
-static void showMem(Register *memory) {
-	int i;
-	printf("Enter the starting address:\n::_");
-	scanf("%X", &i);
-	printf("\n");
-	for (int j = 0; j < NUM_WORDS_TO_DISPLAY && i < TOTAL_RAM; j++, i++)
-		printf("0x%04X: 0x%04X\n", i, memory[i]);
-	sleep(2);
+    CPU_p cpu = (CPU_p)malloc(sizeof(CPU_s));
+    cpu->alu = (ALU_p)malloc(sizeof(ALU_s));
+
+
+    controller(cpu, memory);
 }
